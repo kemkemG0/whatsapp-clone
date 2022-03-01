@@ -47,7 +47,7 @@ const Sidebar =  () =>{
     return(
         <Container>
             <Header>
-                <UserAvatar onClick={()=>auth.signOut()}/>
+                <UserAvatar onClick={()=>auth.signOut()} src={user?.photoURL}/>
                 <IconsContainer>
                     <IconButton>
                         <ChatIcon/>
@@ -66,7 +66,7 @@ const Sidebar =  () =>{
             
             {/* List of chats */}
             { chatsQuerySnapshot?.docs.map((chat)=>(
-                <Chat key={chat.id} id={chat.id} user={chat.data().users}/>
+                <Chat key={chat.id} id={chat.id} users={chat.data().users}/>
             ))
             }
         </Container>
