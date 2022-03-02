@@ -8,16 +8,19 @@ import AttachFile from "@material-ui/icons/AttachFile"
 import { Button } from "@material-ui/core";
 import { IconButton } from "@material-ui/core";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { addDoc, collection, doc,query, serverTimestamp, setDoc,orderBy } from "@firebase/firestore";
+import { addDoc, collection, doc,query, serverTimestamp, setDoc,orderBy, where } from "@firebase/firestore";
 import Message from "./Message";
 import { InsertEmoticon } from "@material-ui/icons";
 import { Mic } from "@material-ui/icons";
 import { useState } from "react";
-
+import getRecipientsEmail from "../utils/getRecipientEmail"
+import TimeAgo from "timeago-react"
+import { useRef } from "react";
 
 const ChatScreen = ({chat,messages}) => {
     const [user] = useAuthState(auth);
     const [input, setInput] = useState("");
+    const endOfMessagesRef = useRef(null);
     const router = useRouter();
     const [messagesSnapshot] = useCollection(
         query(
@@ -25,6 +28,12 @@ const ChatScreen = ({chat,messages}) => {
             orderBy("timestamp","asc")
             )
         );
+    const [recipientSnapshot] = useCollection(
+        query(
+            collection(db,"users"),
+            where("email","==",getRecipientsEmail(chat.users, user))
+        )
+    )
 
     const showMessages = () => {
         if(messagesSnapshot){
@@ -44,6 +53,12 @@ const ChatScreen = ({chat,messages}) => {
             ))
         }
     }
+    const ScrollToBottom = () =>{
+        endOfMessagesRef.current.scrollIntoView({
+            behavior: "smooth",
+            block:"start"
+        })
+    }
     const sendMessage = (e) =>{
         e.preventDefault();
         setDoc(doc(db,"users",user.uid),{lastSeen: serverTimestamp()},{merge: true});
@@ -54,15 +69,37 @@ const ChatScreen = ({chat,messages}) => {
             photoURL: user.photoURL,
         })
         setInput("");
+        ScrollToBottom();
     }
+
+    const recipient = recipientSnapshot?.docs?.[0]?.data();
+    const recipientEmail = getRecipientsEmail(chat.users, recipient);
 
     return(
         <Container>
             <Header>
-                <Avatar/>
+                {recipient?(
+                <Avatar src={recipient?.photoURL}/>
+                ):(
+                <Avatar>{recipientEmail[1]}</Avatar>
+                )}
+
                 <HeaderInformation>
-                    <h3>Rec Email</h3>
-                    <p>Last Seen ...</p>
+                    <h3>{recipientEmail}</h3>
+                    { recipientSnapshot ? 
+                        (
+                            <p>Last active:{' '}
+                                {recipient?.lastSeen?.toDate() ? 
+                                    (<TimeAgo datetime={recipient?.lastSeen?.toDate()}></TimeAgo>)
+                                        :
+                                    (<></>)
+                                }
+                            </p>
+                        ):
+                        (
+                            <></>
+                        )
+                    }
                 </HeaderInformation>
                 <HeaderIcons>
                     <IconButton>
@@ -74,7 +111,7 @@ const ChatScreen = ({chat,messages}) => {
 
             <MessageContainer>
                 {showMessages()}
-                <EndOfMessage/>
+                <EndOfMessage ref={endOfMessagesRef}/>
             </MessageContainer>
 
             <InputContainer>
@@ -105,6 +142,7 @@ const Header = styled.div`
     border-bottom:1px solid whitesmoke;
 `;
 
+
 const HeaderInformation = styled.div`
     margin-left:15px;
     flex:1;
@@ -119,7 +157,9 @@ const HeaderInformation = styled.div`
 
 const HeaderIcons = styled.div``;
 
-const EndOfMessage = styled.div``;
+const EndOfMessage = styled.div`
+    margin-top: 50px;
+`;
 
 
 const MessageContainer = styled.div`
