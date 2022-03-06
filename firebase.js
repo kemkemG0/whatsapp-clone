@@ -1,4 +1,4 @@
-import { initializeApp, getApp } from 'firebase/app';
+import { initializeApp, getApp, getApps } from 'firebase/app';
 import {getFirestore} from "firebase/firestore";
 import {getAuth,GoogleAuthProvider} from "firebase/auth";
 
@@ -10,16 +10,10 @@ const firebaseConfig = {
     storageBucket: process.env.storageBucket,
     messagingSenderId: process.env.messagingSenderId,
     appId: process.env.appId,
-    measurementId: process.env.measurementId
+    measurementId: process.env.measurementId,
 };
 
-const app = (()=>{
-    try{
-        return getApp();
-    }catch{
-        return initializeApp(firebaseConfig);
-    }
-    })()
+const app = getApps().length>0 ? getApp() : initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
 const auth = getAuth(app);

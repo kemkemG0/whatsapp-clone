@@ -12,7 +12,7 @@ import { addDoc, collection, doc,query, serverTimestamp, setDoc,orderBy, where }
 import Message from "./Message";
 import { InsertEmoticon } from "@material-ui/icons";
 import { Mic } from "@material-ui/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import getRecipientsEmail from "../utils/getRecipientEmail"
 import TimeAgo from "timeago-react"
 import { useRef } from "react";
@@ -74,6 +74,11 @@ const ChatScreen = ({chat,messages}) => {
 
     const recipient = recipientSnapshot?.docs?.[0]?.data();
     const recipientEmail = getRecipientsEmail(chat.users, recipient);
+
+    useEffect(()=>{
+        ScrollToBottom();
+        console.log("effect")
+    },[messagesSnapshot])
 
     return(
         <Container>
